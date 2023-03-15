@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
 namespace RPC.Services
