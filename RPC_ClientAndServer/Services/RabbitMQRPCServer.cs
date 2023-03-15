@@ -7,7 +7,8 @@ namespace RPC.Services
 {
     public class RabbitMQRPCServer : RabbitMQInterface, IRabbitMQRPCServer
     {
-        public bool Setup()
+        private int _queuExpireTime = (3 * 24 * 60 * 60 * 1000);
+        public bool Setup(int? QueuExpireTime = null)
         {
             if (!base.Setup(0, 1))
                 return false;
@@ -15,18 +16,24 @@ namespace RPC.Services
             if (_channel == null)
                 return false;
 
+            if (QueuExpireTime != null)
+                _queuExpireTime = QueuExpireTime.Value;
+
             _channel.BasicQos(0, 1, false);
 
             return true;
         }
 
-        public bool Setup(string rabbitMQUri)
+        public bool Setup(string rabbitMQUri, int? QueuExpireTime = null)
         {
             if (!base.Setup(rabbitMQUri, 0, 1))
                 return false;
 
             if (_channel == null)
                 return false;
+
+            if (QueuExpireTime != null)
+                _queuExpireTime = QueuExpireTime.Value;
 
             _channel.BasicQos(0, 1, false);
 
@@ -41,16 +48,10 @@ namespace RPC.Services
             if (_channel == null)
                 return;
 
-            //if (!del.Method.ReturnType.IsPrimitive && del.Method.ReturnType.GetInterface("RPC.Serialization.IJsonSerializable") == null)
-            //    return;
-
-            //if(del.Method.GetParameters().Any(x => !x.ParameterType.IsPrimitive && x.ParameterType.GetInterface("RPC.Serialization.IJsonSerializable") == null))
-            //    return;
-
             string queue = name;
             Dictionary<string, object> args = new Dictionary<string, object>();
             //36 hours to span a weekend.
-            args["x-expires"] = (3 * 24 * 60 * 60 * 1000);
+            args["x-expires"] = _queuExpireTime;
 
             _channel.QueueDeclare(queue, true, false, false, args);
 
