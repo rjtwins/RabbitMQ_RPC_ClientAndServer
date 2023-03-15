@@ -1,9 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using RPC.Services;
-using System.Data;
-using System.Runtime.Serialization;
-using System.Text.Json;
 
 namespace RPC.Extensions
 {
@@ -44,14 +41,6 @@ namespace RPC.Extensions
                 });
             });
             return builder;
-        }
-    }
-
-    public class test123
-    {
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            throw new NotImplementedException();
         }
     }
 }
