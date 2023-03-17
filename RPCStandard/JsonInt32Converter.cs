@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 
 namespace RPC
 {
@@ -53,7 +54,6 @@ namespace RPC
                     objectType == typeof(object)
                 ;
         }
-
         #endregion
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 
 namespace RPC.Services
 {
@@ -12,7 +13,7 @@ namespace RPC.Services
         /// </summary>
         /// <param name="QueuExpireTime"></param>
         /// <returns></returns>
-        bool Setup(int? QueuExpireTime = null);
+        void Setup(int? QueuExpireTime = null);
 
         /// <summary>
         /// Setup server with given rabbitMQ uri.
@@ -23,7 +24,7 @@ namespace RPC.Services
         /// <param name="rabbitMQUri"></param>
         /// <param name="QueuExpireTime"></param>
         /// <returns></returns>
-        bool Setup(string rabbitMQUri, int? QueuExpireTime = null);
+        void Setup(string rabbitMQUri, int? QueuExpireTime = null);
 
         /// <summary>
         /// Subscribe a Delegate to be called via RPC with given alias.

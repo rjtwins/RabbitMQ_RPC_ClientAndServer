@@ -1,4 +1,6 @@
-﻿namespace RPC.Services
+﻿using System.Threading.Tasks;
+
+namespace RPC.Services
 {
     public interface IRabbitMQRPCClient
     {
@@ -6,14 +8,14 @@
         /// Setup client with predefined RabbitMQUri.
         /// </summary>
         /// <returns></returns>
-        bool Setup();
+        void Setup();
 
         /// <summary>
         /// Setup client.
         /// </summary>
         /// <param name="rabbitMQUri"></param>
         /// <returns></returns>
-        bool Setup(string rabbitMQUri);
+        void Setup(string rabbitMQUri);
 
         /// <summary>
         /// RPC function where the alias of the remote function is the name of the calling function.

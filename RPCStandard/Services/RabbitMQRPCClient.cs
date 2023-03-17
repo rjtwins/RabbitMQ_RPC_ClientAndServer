@@ -1,76 +1,64 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace RPC.Services
 {
     public class RabbitMQRPCClient : RabbitMQInterface, IRabbitMQRPCClient
     {
-        private string _replyQueue = string.Empty;
-        private ConcurrentDictionary<string, TaskCompletionSource<string>> _responseDict = new ConcurrentDictionary<string, TaskCompletionSource<string>>();
+        private string _replyQueue { set; get; } = string.Empty;
+        private ConcurrentDictionary<string, TaskCompletionSource<string>> _responseDict { set; get; } = new ConcurrentDictionary<string, TaskCompletionSource<string>>();
 
-        public bool Setup()
+        /// <inheritdoc/>
+        public void Setup()
         {
-            if (!base.Setup(0, 1))
-                return false;
-
-            if (_channel == null)
-                return false;
+            base.Setup(0, 1);
 
             _channel.BasicQos(0, 1, false);
 
             _replyQueue = _channel.QueueDeclare("", false, true, true).QueueName;
 
-            if (!SetupReplyQueue())
-                return false;
-
-            return true;
+            SetupReplyQueue();
         }
 
-        public bool Setup(string rabbitMQUri)
+        /// <inheritdoc/>
+        public void Setup(string rabbitMQUri)
         {
-            if (!base.Setup(rabbitMQUri, 0, 1))
-                return false;
-
-            if (_channel == null)
-                return false;
+            base.Setup(rabbitMQUri, 0, 1);
 
             _channel.BasicQos(0, 1, false);
 
             _replyQueue = _channel.QueueDeclare("", false, true, true).QueueName;
 
-            if (!SetupReplyQueue())
-                return false;
-
-            return true;
+            SetupReplyQueue();
         }
 
-        private bool SetupReplyQueue()
+        private void SetupReplyQueue()
         {
-            if (_basicConsumer == null)
-                return false;
-
-            _basicConsumer.Received += (object? sender, BasicDeliverEventArgs args) =>
+            _basicConsumer.Received += (object sender, BasicDeliverEventArgs args) =>
             {
                 string message = Encoding.UTF8.GetString(args.Body.ToArray());
-                if (!_responseDict.TryGetValue(args.BasicProperties.CorrelationId, out TaskCompletionSource<string>? result))
+                if (!_responseDict.TryGetValue(args.BasicProperties.CorrelationId, out TaskCompletionSource<string> result))
                     return;
 
                 if (result == null)
                     return;
 
-                if (!result.TrySetResult(message))
-                    return;
+                Debug.WriteLine($"Reply Queue {args.RoutingKey} received {message} correlationId {args.BasicProperties.CorrelationId}.");
+
+                result.SetResult(message);
             };
 
             _channel.BasicConsume(_replyQueue, true, _basicConsumer);
-
-            return true;
         }
 
+        /// <inheritdoc/>
         public T Call<T>(string alias, params object[] arguments)
         {
             Task<T> task = CallAsync<T>(alias, arguments);
@@ -79,12 +67,7 @@ namespace RPC.Services
             return task.Result;
         }
 
-        /// <summary>
-        /// Calls RPCServer method with the name of the calling method.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="arguments"></param>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public T Call<T>(params object[] arguments)
         {
             var alias = (new System.Diagnostics.StackTrace()?.GetFrame(1)?.GetMethod() as MethodInfo)?.Name;
@@ -97,12 +80,7 @@ namespace RPC.Services
             return task.Result;
         }
 
-        /// <summary>
-        /// Async call RPCServer method with the name of the calling method.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="arguments"></param>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public async Task<T> CallAsync<T>(params object[] arguments)
         {
             var alias = (new System.Diagnostics.StackTrace()?.GetFrame(1)?.GetMethod() as MethodInfo)?.Name;
@@ -112,13 +90,16 @@ namespace RPC.Services
             return await CallAsync<T>(alias, arguments);
         }
 
+        /// <inheritdoc/>
         public async Task<T> CallAsync<T>(string alias, params object[] arguments)
         {
             if (_channel == null)
                 return default(T);
 
-            string body = JsonSerializer.Serialize(arguments);
+            string body = Newtonsoft.Json.JsonConvert.SerializeObject(arguments, _settings);
             string queue = alias;
+            queue += "_" + string.Join("_", arguments.ToList().Select(x => x.GetType().Name));
+            queue += "_" + typeof(T).Name;
 
             IBasicProperties props = _channel.CreateBasicProperties();
             props.CorrelationId = Guid.NewGuid().ToString();
@@ -128,18 +109,20 @@ namespace RPC.Services
 
             _channel.BasicPublish("", queue, props, Encoding.UTF8.GetBytes(body));
 
-            string resultString = await taskCompletionSource.Task;
+            Debug.WriteLine($"Message sent to {queue} message {body} replyTo {_replyQueue} correlationId {props.CorrelationId}");
 
-            T result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(resultString);
-
+            Task.WaitAll(taskCompletionSource.Task);
+            T result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(taskCompletionSource.Task.Result);
             return result;
         }
 
+        /// <inheritdoc/>
         public void Call(string alias, params object[] arguments)
         {
-            Call<object>(alias, arguments);
+            Call<Models.Void>(alias, arguments);
         }
 
+        /// <inheritdoc/>
         public void Call(params object[] arguments)
         {
             var alias = (new System.Diagnostics.StackTrace()?.GetFrame(1)?.GetMethod() as MethodInfo)?.Name;

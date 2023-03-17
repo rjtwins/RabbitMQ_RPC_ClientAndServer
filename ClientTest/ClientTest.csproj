@@ -11,8 +11,4 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\RPC_ClientAndServer\RPC.csproj" />
-  </ItemGroup>
-
 </Project>

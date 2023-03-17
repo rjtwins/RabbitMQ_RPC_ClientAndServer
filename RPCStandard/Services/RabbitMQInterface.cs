@@ -1,5 +1,8 @@
-﻿using RabbitMQ.Client;
+﻿using Newtonsoft.Json;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System;
+using System.Threading;
 
 namespace RPC.Services
 {
@@ -7,26 +10,37 @@ namespace RPC.Services
     {
         private const int RETRY_TIMES = 3;
 
-        protected IConnection? _connection { get; set; }
-        protected IModel? _channel { get; set; }
-        protected EventingBasicConsumer? _basicConsumer { get; set; }
+        protected IConnection _connection { get; set; }
+        protected IModel _channel { get; set; }
+        protected EventingBasicConsumer _basicConsumer { get; set; }
         private string _rabbitMQUri { get; set; } = string.Empty;
         private bool setup { get; set; } = false;
         private int _prefetchSize, _prefetchCount = 0;
+        protected JsonSerializerSettings _settings { get; }
 
-        protected bool Setup(int prefetchSize = 0, int prefetchCount = 0)
+        public RabbitMQInterface()
+        {
+            _settings = new JsonSerializerSettings();
+            _settings.TypeNameHandling = TypeNameHandling.All;
+            _settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+            _settings.Converters.Add(new JsonInt32Converter());
+        }
+
+        protected void Setup(int prefetchSize = 0, int prefetchCount = 0)
         {
             if (string.IsNullOrEmpty(_rabbitMQUri))
-                return false;
+                throw new InvalidOperationException("RabbitMQ connection string was null during setup.");
 
-            return Setup(_rabbitMQUri, prefetchSize, prefetchCount);
+            Setup(_rabbitMQUri, prefetchSize, prefetchCount);
         }
 
         /// <inheritdoc/>
-        protected bool Setup(string rabbitMQUri, int prefetchSize = 0, int prefetchCount = 0)
+        protected void Setup(string rabbitMQUri, int prefetchSize = 0, int prefetchCount = 0)
         {
             if (setup)
-                throw new InvalidOperationException("RabbitMQInterface was allready setup, use Reset() to reset the instance.");
+                throw new InvalidOperationException("RabbitMQInterface was already setup, use Reset() to reset the instance.");
+
+            _rabbitMQUri = rabbitMQUri;
 
             if (string.IsNullOrEmpty(_rabbitMQUri))
                 throw new InvalidOperationException("Provided connection uri was empty.");
@@ -35,18 +49,13 @@ namespace RPC.Services
             _prefetchSize = prefetchSize;
             _prefetchCount = prefetchCount;
 
-            if (!CreateConnection())
-                return false;
+            CreateConnection();
 
-            if (!CreateChannel())
-                return false;
+            CreateChannel();
 
-            if (!CreateConsumer())
-                return false;
+            CreateConsumer();
 
             setup = true;
-
-            return true;
         }
 
         public virtual void Reset()
@@ -71,7 +80,7 @@ namespace RPC.Services
         /// <summary>
         /// Create connection with recursive retry pattern.
         /// </summary>
-        private bool CreateConnection(int retry = 0)
+        private void CreateConnection(int retry = 0)
         {
             try
             {
@@ -81,38 +90,38 @@ namespace RPC.Services
 
                 factory.Uri = new Uri(_rabbitMQUri);
                 _connection = factory.CreateConnection();
-
-                return true;
             }
             catch (Exception)
             {
                 if (RETRY_TIMES <= retry)
                 {
-                    return false;
+                    throw;
                 }
 
                 Thread.Sleep(5000 * retry);
-                return CreateConnection(retry + 1);
+                CreateConnection(retry + 1);
             }
         }
 
         /// <summary>
         /// Create model.
         /// </summary>
-        private bool CreateChannel()
+        private void CreateChannel()
         {
-            if (_connection == null || !_connection.IsOpen)
-                return false;
+            if (_connection == null)
+                throw new InvalidOperationException("RabbitMQ connection object was null while creating a channel.");
+
+            if (!_connection.IsOpen)
+                throw new InvalidOperationException("RabbitMQ connection was closed while creating a channel.");
 
             try
             {
                 _channel = _connection.CreateModel();
                 _channel.BasicQos(prefetchSize: (uint)_prefetchSize, prefetchCount: (ushort)_prefetchCount, global: false);
-                return true;
             }
             catch (Exception)
             {
-                return false;
+                throw;
             }
         }
 
@@ -120,19 +129,21 @@ namespace RPC.Services
         /// Create the consumer.
         /// </summary>
         /// <returns></returns>
-        private bool CreateConsumer()
+        private void CreateConsumer()
         {
-            if (_channel == null || !_channel.IsOpen)
-                return false;
+            if (_channel == null)
+                throw new InvalidOperationException("RabbitMQ channel object was null while creating a consumer.");
+
+            if (!_channel.IsOpen)
+                throw new InvalidOperationException("RabbitMQ channel was closed while creating a channel.");
 
             try
             {
                 _basicConsumer = new EventingBasicConsumer(_channel);
-                return true;
             }
             catch (Exception)
             {
-                return false;
+                throw;
             }
         }
     }
