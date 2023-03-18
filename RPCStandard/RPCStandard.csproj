@@ -2,6 +2,19 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>RabbitMQRPC</PackageId>
+    <Title>RPC client and server for RabbitMQ</Title>
+    <Version>0.3.0</Version>
+    <Authors>J.Vedder</Authors>
+    <Product>RabbitMQRPC</Product>
+    <Description>Library for setting up an RPC server and client with RabbitMQ as transport.</Description>
+    <PackageProjectUrl>https://github.com/rjtwins/RabbitMQ_RPC_ClientAndServer</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/rjtwins/RabbitMQ_RPC_ClientAndServer</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>RabbitMQ;RPC</PackageTags>
+    <SignAssembly>False</SignAssembly>
+    <RootNamespace>RPC</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
