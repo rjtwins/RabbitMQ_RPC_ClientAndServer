@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerTest", "ServerTest\Se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientTest", "ClientTest\ClientTest.csproj", "{7D95702B-B05A-4A4B-B61B-0FA2ABFAAFC8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RCP", "..\..\CoreMap\RPCStandard\RCP.csproj", "{ED217C9C-DF7E-4FB4-9A88-05F5495C1CCD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RPCStandard", "RPCStandard\RPCStandard.csproj", "{31D94AE0-86A1-4CFA-A2E2-8D0A1C65F4D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{7D95702B-B05A-4A4B-B61B-0FA2ABFAAFC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D95702B-B05A-4A4B-B61B-0FA2ABFAAFC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D95702B-B05A-4A4B-B61B-0FA2ABFAAFC8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ED217C9C-DF7E-4FB4-9A88-05F5495C1CCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ED217C9C-DF7E-4FB4-9A88-05F5495C1CCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ED217C9C-DF7E-4FB4-9A88-05F5495C1CCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ED217C9C-DF7E-4FB4-9A88-05F5495C1CCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31D94AE0-86A1-4CFA-A2E2-8D0A1C65F4D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31D94AE0-86A1-4CFA-A2E2-8D0A1C65F4D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31D94AE0-86A1-4CFA-A2E2-8D0A1C65F4D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31D94AE0-86A1-4CFA-A2E2-8D0A1C65F4D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
