@@ -50,7 +50,9 @@ namespace RPC.Services
                 if (result == null)
                     return;
 
+#if DEBUG
                 Debug.WriteLine($"Reply Queue {args.RoutingKey} received {message} correlationId {args.BasicProperties.CorrelationId}.");
+#endif
 
                 result.SetResult(message);
             };
@@ -94,7 +96,10 @@ namespace RPC.Services
         public async Task<T> CallAsync<T>(string alias, params object[] arguments)
         {
             if (_channel == null)
-                return default(T);
+                throw new ArgumentNullException($"While calling {alias} RabbitMQ channel was null.");
+
+            if(!_channel.IsOpen)
+                throw new InvalidOperationException($"While calling {alias} RabbitMQ channel was closed.");
 
             string body = Newtonsoft.Json.JsonConvert.SerializeObject(arguments, _settings);
             string queue = alias;
@@ -109,9 +114,12 @@ namespace RPC.Services
 
             _channel.BasicPublish("", queue, props, Encoding.UTF8.GetBytes(body));
 
+#if DEBUG
             Debug.WriteLine($"Message sent to {queue} message {body} replyTo {_replyQueue} correlationId {props.CorrelationId}");
+#endif
 
-            Task.WaitAll(taskCompletionSource.Task);
+            var taskResult = await taskCompletionSource.Task;
+
             T result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(taskCompletionSource.Task.Result);
             return result;
         }

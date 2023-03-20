@@ -30,8 +30,14 @@ namespace RPC.Services
         /// Subscribe a Delegate to be called via RPC with given alias.
         /// Any parameters and return types for delegate must be serializable via Newtonsoft.Json.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// async indicates if server should handle delegate call async.
+        /// </para>
+        /// </remarks>
         /// <param name="del"></param>
         /// <param name="name"></param>
-        void Subscribe(Delegate del, string name);
+        /// <param name="async"></param>
+        void Subscribe(Delegate del, string name, bool async = false);
     }
 }

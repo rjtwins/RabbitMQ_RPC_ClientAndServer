@@ -19,9 +19,14 @@ if (client == null)
 
 List<long> times = new List<long>();
 
-int result = client.Call<int>("RPC_7", 1);
+Parallel.For(0, 500, i =>
+{
+    var task = client.CallAsync<int>("RPC_7", i);
+    task.Wait();
+    var result = task.Result;
+    Console.WriteLine(result);
 
-Console.WriteLine(result);
+});
 
 Console.WriteLine("Press any key to exit");
 Console.ReadKey();

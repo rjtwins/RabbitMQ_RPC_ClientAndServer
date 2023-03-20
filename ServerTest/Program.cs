@@ -17,7 +17,11 @@ server?.Setup();
 if (server == null)
     return;
 
-server.Subscribe((int x) => { return x + 1; }, "RPC_7");
+server.Subscribe((int x) => 
+{ 
+    Thread.Sleep(1000);
+    return x + 1;
+}, "RPC_7", true);
 
 Console.WriteLine("Press any key to exit");
 Console.ReadKey();
