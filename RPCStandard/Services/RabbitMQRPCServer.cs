@@ -52,7 +52,9 @@ namespace RPC.Services
 
             _channel.QueueDeclare(queue, true, false, false, args);
 
-            _basicConsumer.Received += (object sender, BasicDeliverEventArgs deliveryArgs) =>
+            var consumer = new EventingBasicConsumer(_channel);
+
+            consumer.Received += (object sender, BasicDeliverEventArgs deliveryArgs) =>
             {
                 if (_channel == null)
                 {
@@ -72,7 +74,7 @@ namespace RPC.Services
                 _channel.BasicAck(deliveryArgs.DeliveryTag, multiple: false);
             };
 
-            _channel.BasicConsume(queue, false, _basicConsumer);
+            _channel.BasicConsume(queue, false, consumer);
         }
 
         private void ProcessCall(string message, string correlationId, string replyTo, string from, Delegate del)
@@ -81,7 +83,7 @@ namespace RPC.Services
             try
             {
 #if DEBUG
-                Debug.WriteLine($"Server Queue {from} received {message} correlationId {correlationId}.");
+                Debug.WriteLine($"SERVER: Queue {from} received message correlationId {correlationId}.");
 #endif
                 var arguments = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(message, _settings).ToList();
 
@@ -106,7 +108,7 @@ namespace RPC.Services
 
             _channel.BasicPublish("", replyTo, props, Encoding.UTF8.GetBytes(message));
 #if DEBUG
-            Debug.WriteLine($"Server responded to {replyTo} message {message} correlationId {correlationId}.");
+            Debug.WriteLine($"SERVER: Responded to {replyTo} message correlationId {correlationId}.");
 #endif
         }
     }

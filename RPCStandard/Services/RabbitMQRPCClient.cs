@@ -51,9 +51,8 @@ namespace RPC.Services
                     return;
 
 #if DEBUG
-                Debug.WriteLine($"Reply Queue {args.RoutingKey} received {message} correlationId {args.BasicProperties.CorrelationId}.");
+                Debug.WriteLine($"CLIENT: Reply Queue {args.RoutingKey} received message correlationId {args.BasicProperties.CorrelationId}.");
 #endif
-
                 result.SetResult(message);
             };
 
@@ -115,10 +114,14 @@ namespace RPC.Services
             _channel.BasicPublish("", queue, props, Encoding.UTF8.GetBytes(body));
 
 #if DEBUG
-            Debug.WriteLine($"Message sent to {queue} message {body} replyTo {_replyQueue} correlationId {props.CorrelationId}");
+            Debug.WriteLine($"CLIENT: Message sent to {queue} replyTo {_replyQueue} correlationId {props.CorrelationId}");
 #endif
 
-            var taskResult = await taskCompletionSource.Task;
+            taskCompletionSource.Task.Wait();
+
+#if DEBUG
+            Debug.WriteLine($"CLIENT: Message reply task for {props.CorrelationId} completed.");
+#endif
 
             T result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(taskCompletionSource.Task.Result);
             return result;
