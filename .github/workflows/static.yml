@@ -33,6 +33,7 @@ jobs:
         dotnet-version: 7.x
 
     - run: dotnet tool update -g docfx
+    - run: docfx init --quiet
     - run: docfx docfx_project/docfx.json
 
     - name: Deploy
