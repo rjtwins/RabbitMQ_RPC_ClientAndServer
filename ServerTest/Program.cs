@@ -21,7 +21,7 @@ if (server == null)
 server.Subscribe((int x) => 
 { 
     return x + 1;
-}, "RPC_7", true);
+}, "RPC_101", true);
 
 server.ReceiverUse(async (context, next) =>
 {

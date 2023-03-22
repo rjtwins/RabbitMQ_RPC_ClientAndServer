@@ -32,9 +32,7 @@ client.ReplyReceiverUse(async (message, next) =>
 });
 
 
-var task = client.CallAsync<int>("RPC_7", 1);
-task.Wait();
-var result = task.Result;
+var result = client.Call<int>("RPC_101", 1);
 Console.WriteLine(result);
 
 Console.WriteLine("Press any key to exit");

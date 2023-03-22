@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>RabbitMQRPC</PackageId>
     <Title>RPC client and server for RabbitMQ</Title>
-    <Version>0.4.2</Version>
+    <Version>0.5.0</Version>
     <Authors>J.Vedder</Authors>
     <Product>RabbitMQRPC</Product>
     <Description>Library for setting up an RPC server and client with RabbitMQ as transport.</Description>

@@ -30,13 +30,13 @@ namespace RPC.Services
         void Setup(string rabbitMQUri);
 
         /// <summary>
-        /// Add middleware middleware chain that encapsulates client making a call.
+        /// Add middleware to the middleware chain that encapsulates client making a call.
         /// </summary>
         /// <param name="function"></param>
         void CallerUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function);
 
         /// <summary>
-        /// Add middleware middleware chain that encapsulates client handling the reply.
+        /// Add middleware to the middleware chain that encapsulates client handling the reply.
         /// </summary>
         /// <param name="function"></param>
         void ReplyReceiverUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function);
