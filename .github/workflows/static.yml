@@ -23,6 +23,9 @@ concurrency:
 
 jobs:
   publish-docs:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
     - name: Chekout
@@ -35,9 +38,11 @@ jobs:
     - run: dotnet tool update -g docfx
     - run: docfx init --quiet
     - run: docfx docfx_project/docfx.json
-
-    - name: Deploy
-      uses: peaceiris/actions-gh-pages@v3
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v1
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: docs/_site
+        # Upload entire repository
+        path: '.'
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v1
