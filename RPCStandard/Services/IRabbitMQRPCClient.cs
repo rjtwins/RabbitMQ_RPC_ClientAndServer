@@ -1,9 +1,21 @@
-﻿using System.Threading.Tasks;
+﻿using RPC.Models;
+using System;
+using System.Threading.Tasks;
 
 namespace RPC.Services
 {
     public interface IRabbitMQRPCClient
     {
+        /// <summary>
+        /// Raised when a message was send.
+        /// </summary>
+        event EventHandler<RabbitMQRPCMessageEventArgs> MessageSend;
+
+        /// <summary>
+        /// Raised when a reply was received.
+        /// </summary>
+        event EventHandler<RabbitMQRPCMessageEventArgs> ReplyReceived;
+
         /// <summary>
         /// Setup client with predefined RabbitMQUri.
         /// </summary>
@@ -16,6 +28,18 @@ namespace RPC.Services
         /// <param name="rabbitMQUri"></param>
         /// <returns></returns>
         void Setup(string rabbitMQUri);
+
+        /// <summary>
+        /// Add middleware middleware chain that encapsulates client making a call.
+        /// </summary>
+        /// <param name="function"></param>
+        void CallerUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function);
+
+        /// <summary>
+        /// Add middleware middleware chain that encapsulates client handling the reply.
+        /// </summary>
+        /// <param name="function"></param>
+        void ReplyReceiverUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function);
 
         /// <summary>
         /// RPC function where the alias of the remote function is the name of the calling function.

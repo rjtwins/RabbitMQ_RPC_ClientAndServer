@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting; // Requires NuGet package
+using Microsoft.Extensions.Hosting;
 using RPC.Extensions;
 using RPC.Services;
 using System.Diagnostics;
@@ -17,16 +17,25 @@ client?.Setup();
 if (client == null)
     return;
 
-List<long> times = new List<long>();
-
-Parallel.For(0, 500, i =>
+client.CallerUse(async (message, next) =>
 {
-    var task = client.CallAsync<int>("RPC_7", i);
-    task.Wait();
-    var result = task.Result;
-    Console.WriteLine(result);
-
+    Debug.WriteLine("before caller");
+    await next();
+    Debug.WriteLine("after caller");
 });
+
+client.ReplyReceiverUse(async (message, next) =>
+{
+    Debug.WriteLine("before receiver");
+    await next();
+    Debug.WriteLine("after receiver");
+});
+
+
+var task = client.CallAsync<int>("RPC_7", 1);
+task.Wait();
+var result = task.Result;
+Console.WriteLine(result);
 
 Console.WriteLine("Press any key to exit");
 Console.ReadKey();

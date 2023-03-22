@@ -18,6 +18,7 @@
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<UserSecretsId>4f741ebb-2994-453a-92be-9f2302a0a1da</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

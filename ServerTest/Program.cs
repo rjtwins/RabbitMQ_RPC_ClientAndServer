@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using RPC.Extensions;
 using RPC.Services;
+using System.Diagnostics;
 
 IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args);
 hostBuilder.AddRabbitMQRPC("amqp://guest:guest@localhost:5672");
@@ -19,9 +20,22 @@ if (server == null)
 
 server.Subscribe((int x) => 
 { 
-    Thread.Sleep(1000);
     return x + 1;
 }, "RPC_7", true);
+
+server.ReceiverUse(async (context, next) =>
+{
+    Debug.WriteLine("before receive");
+    await next();
+    Debug.WriteLine("after receive");
+});
+
+server.ResponderUse(async (context, next) =>
+{
+    Debug.WriteLine("before respond");
+    await next();
+    Debug.WriteLine("after respond");
+});
 
 Console.WriteLine("Press any key to exit");
 Console.ReadKey();

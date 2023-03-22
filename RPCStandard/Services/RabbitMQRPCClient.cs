@@ -1,19 +1,29 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RPC.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RPC.Services
 {
-    public class RabbitMQRPCClient : RabbitMQInterface, IRabbitMQRPCClient
+    public sealed class RabbitMQRPCClient : RabbitMQInterface, IRabbitMQRPCClient
     {
         private string _replyQueue { set; get; } = string.Empty;
-        private ConcurrentDictionary<string, TaskCompletionSource<string>> _responseDict { set; get; } = new ConcurrentDictionary<string, TaskCompletionSource<string>>();
+        private ConcurrentDictionary<string, string> _responseDict { set; get; } = new ConcurrentDictionary<string, string>();
+        private ConcurrentDictionary<string, SemaphoreSlim> _semaphoreDict { set; get; } = new ConcurrentDictionary<string, SemaphoreSlim>();
+
+
+        public event EventHandler<RabbitMQRPCMessageEventArgs> MessageSend;
+        public event EventHandler<RabbitMQRPCMessageEventArgs> ReplyReceived;
+
+        private readonly MiddlewareProvider _callerMiddleware = new MiddlewareProvider();
+        private readonly MiddlewareProvider _replyReceiverMiddleware = new MiddlewareProvider();
 
         /// <inheritdoc/>
         public void Setup()
@@ -43,22 +53,72 @@ namespace RPC.Services
         {
             _basicConsumer.Received += (object sender, BasicDeliverEventArgs args) =>
             {
-                string message = Encoding.UTF8.GetString(args.Body.ToArray());
-                if (!_responseDict.TryGetValue(args.BasicProperties.CorrelationId, out TaskCompletionSource<string> result))
-                    return;
+                //Context
+                RabbitMQRPCMessage context = new RabbitMQRPCMessage()
+                {
+                    Message = Encoding.UTF8.GetString(args.Body.ToArray()),
+                    CorrelationId = args.BasicProperties.CorrelationId,
+                    ReplyTo = args.BasicProperties.ReplyTo,
+                    Queue = args.BasicProperties.ReplyTo,
+                    DeliveryTag = args.DeliveryTag
+                };
 
-                if (result == null)
-                    return;
+                //Clone middleware stack.
+                var middleware = (MiddlewareProvider)_replyReceiverMiddleware.Clone();
 
+                //Add final task to middleware stack.
+                middleware.Use((message, next) => 
+                {
+                    ReplyReceived?.Invoke(this, new RabbitMQRPCMessageEventArgs() { Message = message.Message, CorrelationId = message.CorrelationId, Queue = message.Queue, ReplyTo = message.ReplyTo });
+
+                    if (!_semaphoreDict.TryRemove(message.CorrelationId, out SemaphoreSlim semaphore))
+                        return Task.CompletedTask;
+
+                    if (message.Message == null)
+                        return Task.CompletedTask;
 #if DEBUG
-                Debug.WriteLine($"CLIENT: Reply Queue {args.RoutingKey} received message correlationId {args.BasicProperties.CorrelationId}.");
+                    Debug.WriteLine($"CLIENT: Reply Queue {args.RoutingKey} received message correlationId {args.BasicProperties.CorrelationId}.");
 #endif
-                result.SetResult(message);
+                    _responseDict.TryAdd(message.CorrelationId, message.Message);
+                    semaphore.Release();
+
+                    return Task.CompletedTask;
+                });
+
+                //Run middleware stack and actual task.
+                middleware.Run(context).Wait();
             };
 
             _channel.BasicConsume(_replyQueue, true, _basicConsumer);
         }
 
+        /// <inheritdoc/>
+        public void CallerUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function)
+        {
+            _callerMiddleware.Use(function);
+        }
+
+        /// <inheritdoc/>
+        public void ReplyReceiverUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function)
+        {
+            _replyReceiverMiddleware.Use(function);
+        }
+
+        /// <inheritdoc/>
+        public void Call(string alias, params object[] arguments)
+        {
+            Call<Models.Void>(alias, arguments);
+        }
+
+        /// <inheritdoc/>
+        public void Call(params object[] arguments)
+        {
+            var alias = (new System.Diagnostics.StackTrace()?.GetFrame(1)?.GetMethod() as MethodInfo)?.Name;
+            if (alias == null)
+                throw new InvalidOperationException("Calling methods name could not be resolved.");
+
+            Call(alias, arguments);
+        }
         /// <inheritdoc/>
         public T Call<T>(string alias, params object[] arguments)
         {
@@ -105,42 +165,54 @@ namespace RPC.Services
             queue += "_" + string.Join("_", arguments.ToList().Select(x => x.GetType().Name));
             queue += "_" + typeof(T).Name;
 
-            IBasicProperties props = _channel.CreateBasicProperties();
-            props.CorrelationId = Guid.NewGuid().ToString();
-            props.ReplyTo = _replyQueue;
-            var taskCompletionSource = new TaskCompletionSource<string>();
-            _responseDict.TryAdd(props.CorrelationId, taskCompletionSource);
+            //Context
+            RabbitMQRPCMessage context = new RabbitMQRPCMessage()
+            {
+                Message = body,
+                CorrelationId = Guid.NewGuid().ToString(),
+                ReplyTo = _replyQueue,
+                Queue = queue,
+                DeliveryTag = 0
+            };
 
-            _channel.BasicPublish("", queue, props, Encoding.UTF8.GetBytes(body));
+            //Clone middleware stack.
+            var middleware = (MiddlewareProvider)_callerMiddleware.Clone();
+
+            //Setup result variable.
+            T result = default(T);
+
+            //Add final task to middleware.
+            middleware.Use(async (message, next) =>
+            {
+                IBasicProperties props = _channel.CreateBasicProperties();
+                props.CorrelationId = message.CorrelationId;
+                props.ReplyTo = message.ReplyTo;
+
+                SemaphoreSlim semaphore = new SemaphoreSlim(0);
+                _semaphoreDict.TryAdd(message.CorrelationId, semaphore);
+
+                _channel.BasicPublish("", message.Queue, props, Encoding.UTF8.GetBytes(message.Message));
+
+                MessageSend?.Invoke(this, new RabbitMQRPCMessageEventArgs() { Message = message.Message, CorrelationId = message.CorrelationId, Queue = message.Queue, ReplyTo = message.ReplyTo });
 
 #if DEBUG
-            Debug.WriteLine($"CLIENT: Message sent to {queue} replyTo {_replyQueue} correlationId {props.CorrelationId}");
+                Debug.WriteLine($"CLIENT: Message sent to {message.Queue} replyTo {message.ReplyTo} correlationId {props.CorrelationId}");
 #endif
 
-            taskCompletionSource.Task.Wait();
+                await Task.Factory.StartNew(() => semaphore.Wait());
 
 #if DEBUG
-            Debug.WriteLine($"CLIENT: Message reply task for {props.CorrelationId} completed.");
+                Debug.WriteLine($"CLIENT: Message semaphore for {props.CorrelationId} released.");
 #endif
+                _responseDict.TryRemove(message.CorrelationId, out var responseString);
+                result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseString);
+            });
 
-            T result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(taskCompletionSource.Task.Result);
+            //Run middleware.
+            await middleware.Run(context);
+
+            //Return result.
             return result;
-        }
-
-        /// <inheritdoc/>
-        public void Call(string alias, params object[] arguments)
-        {
-            Call<Models.Void>(alias, arguments);
-        }
-
-        /// <inheritdoc/>
-        public void Call(params object[] arguments)
-        {
-            var alias = (new System.Diagnostics.StackTrace()?.GetFrame(1)?.GetMethod() as MethodInfo)?.Name;
-            if (alias == null)
-                throw new InvalidOperationException("Calling methods name could not be resolved.");
-
-            Call(alias, arguments);
         }
     }
 }
