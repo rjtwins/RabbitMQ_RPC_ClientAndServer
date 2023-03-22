@@ -1,0 +1,381 @@
+﻿<!DOCTYPE html>
+<!--[if IE]><![endif]-->
+<html>
+
+  <head>
+    <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+      <title>Class RabbitMQRPCServer
+ </title>
+      <meta name="viewport" content="width=device-width">
+      <meta name="title" content="Class RabbitMQRPCServer
+ ">
+    
+      <link rel="shortcut icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.vendor.min.css">
+      <link rel="stylesheet" href="../styles/docfx.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta property="docfx:navrel" content="../toc.html">
+      <meta property="docfx:tocrel" content="toc.html">
+    
+    
+    
+  </head>
+  <body data-spy="scroll" data-target="#affix" data-offset="120">
+    <div id="wrapper">
+      <header>
+
+        <nav id="autocollapse" class="navbar navbar-inverse ng-scope" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+
+              <a class="navbar-brand" href="../index.html">
+                <img id="logo" class="svg" src="../logo.svg" alt="">
+              </a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar">
+              <form class="navbar-form navbar-right" role="search" id="search">
+                <div class="form-group">
+                  <input type="text" class="form-control" id="search-query" placeholder="Search" autocomplete="off">
+                </div>
+              </form>
+            </div>
+          </div>
+        </nav>
+
+        <div class="subnav navbar navbar-default">
+          <div class="container hide-when-search" id="breadcrumb">
+            <ul class="breadcrumb">
+              <li></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+      <div role="main" class="container body-content hide-when-search">
+
+        <div class="sidenav hide-when-search">
+          <a class="btn toc-toggle collapse" data-toggle="collapse" href="#sidetoggle" aria-expanded="false" aria-controls="sidetoggle">Show / Hide Table of Contents</a>
+          <div class="sidetoggle collapse" id="sidetoggle">
+            <div id="sidetoc"></div>
+          </div>
+        </div>
+        <div class="article row grid-right">
+          <div class="col-md-10">
+            <article class="content wrap" id="_content" data-uid="RPC.Services.RabbitMQRPCServer">
+
+
+  <h1 id="RPC_Services_RabbitMQRPCServer" data-uid="RPC.Services.RabbitMQRPCServer" class="text-break">Class RabbitMQRPCServer
+</h1>
+  <div class="markdown level0 summary"></div>
+  <div class="markdown level0 conceptual"></div>
+  <div class="inheritance">
+    <h5>Inheritance</h5>
+    <div class="level0"><span class="xref">object</span></div>
+    <div class="level1"><a class="xref" href="RPC.Services.RabbitMQInterface.html">RabbitMQInterface</a></div>
+    <div class="level2"><span class="xref">RabbitMQRPCServer</span></div>
+  </div>
+  <div class="implements">
+    <h5>Implements</h5>
+    <div><a class="xref" href="RPC.Services.IRabbitMQRPCServer.html">IRabbitMQRPCServer</a></div>
+  </div>
+  <div class="inheritedMembers">
+    <h5>Inherited Members</h5>
+    <div>
+      <a class="xref" href="RPC.Services.RabbitMQInterface.html#RPC_Services_RabbitMQInterface_Reset">RabbitMQInterface.Reset()</a>
+    </div>
+    <div>
+      <a class="xref" href="RPC.Services.RabbitMQInterface.html#RPC_Services_RabbitMQInterface_SetRabbitMQURI_System_String_">RabbitMQInterface.SetRabbitMQURI(string)</a>
+    </div>
+    <div>
+      <span class="xref">object.Equals(object)</span>
+    </div>
+    <div>
+      <span class="xref">object.Equals(object, object)</span>
+    </div>
+    <div>
+      <span class="xref">object.GetHashCode()</span>
+    </div>
+    <div>
+      <span class="xref">object.GetType()</span>
+    </div>
+    <div>
+      <span class="xref">object.ReferenceEquals(object, object)</span>
+    </div>
+    <div>
+      <span class="xref">object.ToString()</span>
+    </div>
+  </div>
+  <h6><strong>Namespace</strong>: <span class="xref">RPC</span>.<a class="xref" href="RPC.Services.html">Services</a></h6>
+  <h6><strong>Assembly</strong>: RPCStandard.dll</h6>
+  <h5 id="RPC_Services_RabbitMQRPCServer_syntax">Syntax</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public sealed class RabbitMQRPCServer : RabbitMQInterface, IRabbitMQRPCServer</code></pre>
+  </div>
+  <h3 id="methods">Methods
+</h3>
+
+
+  <a id="RPC_Services_RabbitMQRPCServer_ReceiverUse_" data-uid="RPC.Services.RabbitMQRPCServer.ReceiverUse*"></a>
+  <h4 id="RPC_Services_RabbitMQRPCServer_ReceiverUse_System_Func_RPC_Models_RabbitMQRPCMessage_System_Func_System_Threading_Tasks_Task__System_Threading_Tasks_Task__" data-uid="RPC.Services.RabbitMQRPCServer.ReceiverUse(System.Func{RPC.Models.RabbitMQRPCMessage,System.Func{System.Threading.Tasks.Task},System.Threading.Tasks.Task})">ReceiverUse(Func&lt;RabbitMQRPCMessage, Func&lt;Task&gt;, Task&gt;)</h4>
+  <div class="markdown level1 summary"><p>Add middleware to the middleware chain that encapsulates server function execution.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="declaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void ReceiverUse(Func&lt;RabbitMQRPCMessage, Func&lt;Task&gt;, Task&gt; function)</code></pre>
+  </div>
+  <h5 class="parameters">Parameters</h5>
+  <table class="table table-bordered table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="xref">Func</span>&lt;<a class="xref" href="RPC.Models.RabbitMQRPCMessage.html">RabbitMQRPCMessage</a>, <span class="xref">Func</span>&lt;<span class="xref">Task</span>&gt;, <span class="xref">Task</span>&gt;</td>
+        <td><span class="parametername">function</span></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <a id="RPC_Services_RabbitMQRPCServer_ResponderUse_" data-uid="RPC.Services.RabbitMQRPCServer.ResponderUse*"></a>
+  <h4 id="RPC_Services_RabbitMQRPCServer_ResponderUse_System_Func_RPC_Models_RabbitMQRPCMessage_System_Func_System_Threading_Tasks_Task__System_Threading_Tasks_Task__" data-uid="RPC.Services.RabbitMQRPCServer.ResponderUse(System.Func{RPC.Models.RabbitMQRPCMessage,System.Func{System.Threading.Tasks.Task},System.Threading.Tasks.Task})">ResponderUse(Func&lt;RabbitMQRPCMessage, Func&lt;Task&gt;, Task&gt;)</h4>
+  <div class="markdown level1 summary"><p>Add middleware to the middleware chain that encapsulates server reply.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="declaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void ResponderUse(Func&lt;RabbitMQRPCMessage, Func&lt;Task&gt;, Task&gt; function)</code></pre>
+  </div>
+  <h5 class="parameters">Parameters</h5>
+  <table class="table table-bordered table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="xref">Func</span>&lt;<a class="xref" href="RPC.Models.RabbitMQRPCMessage.html">RabbitMQRPCMessage</a>, <span class="xref">Func</span>&lt;<span class="xref">Task</span>&gt;, <span class="xref">Task</span>&gt;</td>
+        <td><span class="parametername">function</span></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <a id="RPC_Services_RabbitMQRPCServer_Setup_" data-uid="RPC.Services.RabbitMQRPCServer.Setup*"></a>
+  <h4 id="RPC_Services_RabbitMQRPCServer_Setup_System_Nullable_System_Int32__" data-uid="RPC.Services.RabbitMQRPCServer.Setup(System.Nullable{System.Int32})">Setup(int?)</h4>
+  <div class="markdown level1 summary"><p>Setup server with predifined rabbitMQ uri.
+Optional argument RPC Queue expiration time.
+Where the expiration time is the time sinse last interaction with queue.
+Default expiration time is 36 hours.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="declaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Setup(int? QueuExpireTime = null)</code></pre>
+  </div>
+  <h5 class="parameters">Parameters</h5>
+  <table class="table table-bordered table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="xref">int</span>?</td>
+        <td><span class="parametername">QueuExpireTime</span></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <a id="RPC_Services_RabbitMQRPCServer_Setup_" data-uid="RPC.Services.RabbitMQRPCServer.Setup*"></a>
+  <h4 id="RPC_Services_RabbitMQRPCServer_Setup_System_String_System_Nullable_System_Int32__" data-uid="RPC.Services.RabbitMQRPCServer.Setup(System.String,System.Nullable{System.Int32})">Setup(string, int?)</h4>
+  <div class="markdown level1 summary"><p>Setup server with given rabbitMQ uri.
+Optional argument RPC Queue expiration time.
+Where the expiration time is the time sinse last interaction with queue.
+Default expiration time is 36 hours.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="declaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Setup(string rabbitMQUri, int? QueuExpireTime = null)</code></pre>
+  </div>
+  <h5 class="parameters">Parameters</h5>
+  <table class="table table-bordered table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="xref">string</span></td>
+        <td><span class="parametername">rabbitMQUri</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><span class="xref">int</span>?</td>
+        <td><span class="parametername">QueuExpireTime</span></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <a id="RPC_Services_RabbitMQRPCServer_Subscribe_" data-uid="RPC.Services.RabbitMQRPCServer.Subscribe*"></a>
+  <h4 id="RPC_Services_RabbitMQRPCServer_Subscribe_System_Delegate_System_String_System_Boolean_" data-uid="RPC.Services.RabbitMQRPCServer.Subscribe(System.Delegate,System.String,System.Boolean)">Subscribe(Delegate, string, bool)</h4>
+  <div class="markdown level1 summary"><p>Subscribe a Delegate to be called via RPC with given alias.
+Any parameters and return types for delegate must be serializable via Newtonsoft.Json.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="declaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Subscribe(Delegate del, string name, bool async = false)</code></pre>
+  </div>
+  <h5 class="parameters">Parameters</h5>
+  <table class="table table-bordered table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="xref">Delegate</span></td>
+        <td><span class="parametername">del</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><span class="xref">string</span></td>
+        <td><span class="parametername">name</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><span class="xref">bool</span></td>
+        <td><span class="parametername">async</span></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  <h5 id="RPC_Services_RabbitMQRPCServer_Subscribe_System_Delegate_System_String_System_Boolean__remarks">Remarks</h5>
+  <div class="markdown level1 remarks"><p>
+async indicates if server should handle delegate call async.
+</p>
+</div>
+  <h3 id="events">Events
+</h3>
+
+
+  <h4 id="RPC_Services_RabbitMQRPCServer_MessageReceived" data-uid="RPC.Services.RabbitMQRPCServer.MessageReceived">MessageReceived</h4>
+  <div class="markdown level1 summary"><p>Raised when a message was received.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="declaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public event EventHandler&lt;RabbitMQRPCMessageEventArgs&gt; MessageReceived</code></pre>
+  </div>
+  <h5 class="eventType">Event Type</h5>
+  <table class="table table-bordered table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="xref">EventHandler</span>&lt;<a class="xref" href="RPC.Models.RabbitMQRPCMessageEventArgs.html">RabbitMQRPCMessageEventArgs</a>&gt;</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <h4 id="RPC_Services_RabbitMQRPCServer_Responded" data-uid="RPC.Services.RabbitMQRPCServer.Responded">Responded</h4>
+  <div class="markdown level1 summary"><p>Raised when a message was responded to.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="declaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public event EventHandler&lt;RabbitMQRPCMessageEventArgs&gt; Responded</code></pre>
+  </div>
+  <h5 class="eventType">Event Type</h5>
+  <table class="table table-bordered table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="xref">EventHandler</span>&lt;<a class="xref" href="RPC.Models.RabbitMQRPCMessageEventArgs.html">RabbitMQRPCMessageEventArgs</a>&gt;</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  <h3 id="implements">Implements</h3>
+  <div>
+      <a class="xref" href="RPC.Services.IRabbitMQRPCServer.html">IRabbitMQRPCServer</a>
+  </div>
+</article>
+          </div>
+
+          <div class="hidden-sm col-md-2" role="complementary">
+            <div class="sideaffix">
+              <div class="contribution">
+                <ul class="nav">
+                </ul>
+              </div>
+              <nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix" id="affix">
+                <h5>In This Article</h5>
+                <div></div>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <div class="grad-bottom"></div>
+        <div class="footer">
+          <div class="container">
+            <span class="pull-right">
+              <a href="#top">Back to top</a>
+            </span>
+      
+      <span>Generated by <strong>DocFX</strong></span>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script type="text/javascript" src="../styles/docfx.vendor.min.js"></script>
+    <script type="text/javascript" src="../styles/docfx.js"></script>
+    <script type="text/javascript" src="../styles/main.js"></script>
+  </body>
+</html>
