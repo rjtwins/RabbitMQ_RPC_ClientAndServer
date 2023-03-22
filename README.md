@@ -42,7 +42,7 @@ server.Subscribe((int x) => { return x + 1; }, "RPC_101");
 ```
 Note that any parameters and returns must be serializable by Newtonsoft.Json.
 
-### Client in console application.
+### Client example in a console application.
 ```
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -69,4 +69,43 @@ client?.Setup();
 
 //Call a remote method
 int result = client.Call<int>("RPC_101", 1);
+```
+
+### Middleware
+Both client and server support middleware wrapping around their operations.
+Client:
+```
+//Wraps around a call.
+client.CallerUse(async (message, next) =>
+{
+    Debug.WriteLine("before caller");
+    await next();
+    Debug.WriteLine("after caller");
+});
+
+//Wraps around receiving a reply.
+client.ReplyReceiverUse(async (message, next) =>
+{
+    Debug.WriteLine("before receiver");
+    await next();
+    Debug.WriteLine("after receiver");
+});
+```
+Server:
+```
+//Wraps around receiving and processing a message.
+server.ReceiverUse(async (context, next) =>
+{
+    Debug.WriteLine("before receive");
+    await next();
+    Debug.WriteLine("after receive");
+});
+
+//Wraps around responding after processing a message.
+server.ResponderUse(async (context, next) =>
+{
+    Debug.WriteLine("before respond");
+    await next();
+    Debug.WriteLine("after respond");
+});
 ```
