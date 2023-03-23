@@ -26,15 +26,9 @@ server.Subscribe((int x) =>
 server.ReceiverUse(async (context, next) =>
 {
     Debug.WriteLine("before receive");
-    await next();
+    var result = await next();
     Debug.WriteLine("after receive");
-});
-
-server.ResponderUse(async (context, next) =>
-{
-    Debug.WriteLine("before respond");
-    await next();
-    Debug.WriteLine("after respond");
+    return result;
 });
 
 Console.WriteLine("Press any key to exit");

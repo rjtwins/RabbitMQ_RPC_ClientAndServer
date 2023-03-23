@@ -6,39 +6,46 @@ using System.Threading.Tasks;
 
 namespace RPC.Services
 {
-    internal sealed class MiddlewareProvider : ICloneable
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T1"></typeparam>
+    /// <typeparam name="T2"></typeparam>
+    internal class MiddlewareProvider<T1, T2> : ICloneable
     {
-        //public delegate Task MiddlewareDelegate(RabbitMQRPCMessage message, Func<Task> next);
+        protected Queue<Func<T1, Func<Task<T2>>, Task<T2>>> _middleWares { get; set; } = new Queue<Func<T1, Func<Task<T2>>, Task<T2>>>();
+        internal Func<T1, Func<Task<T2>>, Task<T2>> Final { get; set; }
 
-        private Queue<Func<RabbitMQRPCMessage, Func<Task>, Task>> _middleWares { get; set; } = new Queue<Func<RabbitMQRPCMessage, Func<Task>, Task>>();
-
-        internal MiddlewareProvider Use(Func<RabbitMQRPCMessage, Func<Task>, Task> step)
+        internal MiddlewareProvider<T1, T2> Use(Func<T1, Func<Task<T2>>, Task<T2>> step)
         {
             _middleWares.Enqueue(step);
             return this;
         }
 
-        internal async Task Run(RabbitMQRPCMessage context)
+        internal async Task<T2> Run(T1 context)
         {
             if (_middleWares.Any())
             {
-                await RunInternal(context);
+                return await RunInternal(context);
             }
+
+            return await Final(context, null);
         }
 
-        private async Task RunInternal(RabbitMQRPCMessage context)
+        private async Task<T2> RunInternal(T1 context)
         {
             if (_middleWares.Count <= 0)
-                return;
+                return await Final(context, null);
 
-            await _middleWares.Dequeue()(context, () => RunInternal(context));      
+            return await _middleWares.Dequeue()(context, () => RunInternal(context));
         }
 
         public object Clone()
         {
-            var provider = new MiddlewareProvider()
+            var provider = new MiddlewareProvider<T1, T2>()
             {
-                _middleWares = new Queue<Func<RabbitMQRPCMessage, Func<Task>, Task>>(_middleWares.ToList())
+                _middleWares = new Queue<Func<T1, Func<Task<T2>>, Task<T2>>>(_middleWares.ToList()),
+                Final = Final
             };
             return provider;
         }

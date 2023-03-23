@@ -42,13 +42,7 @@ namespace RPC.Services
         /// Add middleware to the middleware chain that encapsulates server function execution.
         /// </summary>
         /// <param name="function"></param>
-        void ReceiverUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function);
-
-        /// <summary>
-        /// Add middleware to the middleware chain that encapsulates server reply.
-        /// </summary>
-        /// <param name="function"></param>
-        void ResponderUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function);
+        void ReceiverUse(Func<RabbitMQRPCMessage, Func<Task<RabbitMQRPCMessage>>, Task<RabbitMQRPCMessage>> function);
 
         /// <summary>
         /// Subscribe a Delegate to be called via RPC with given alias.

@@ -22,8 +22,7 @@ namespace RPC.Services
         public event EventHandler<RabbitMQRPCMessageEventArgs> MessageSend;
         public event EventHandler<RabbitMQRPCMessageEventArgs> ReplyReceived;
 
-        private readonly MiddlewareProvider _callerMiddleware = new MiddlewareProvider();
-        private readonly MiddlewareProvider _replyReceiverMiddleware = new MiddlewareProvider();
+        private readonly MiddlewareProvider<RabbitMQRPCMessage, string> _callerMiddleware = new MiddlewareProvider<RabbitMQRPCMessage, string>();
 
         /// <inheritdoc/>
         public void Setup()
@@ -54,7 +53,7 @@ namespace RPC.Services
             _basicConsumer.Received += (object sender, BasicDeliverEventArgs args) =>
             {
                 //Context
-                RabbitMQRPCMessage context = new RabbitMQRPCMessage()
+                RabbitMQRPCMessage message = new RabbitMQRPCMessage()
                 {
                     Message = Encoding.UTF8.GetString(args.Body.ToArray()),
                     CorrelationId = args.BasicProperties.CorrelationId,
@@ -63,45 +62,24 @@ namespace RPC.Services
                     DeliveryTag = args.DeliveryTag
                 };
 
-                //Clone middleware stack.
-                var middleware = (MiddlewareProvider)_replyReceiverMiddleware.Clone();
+                ReplyReceived?.Invoke(this, new RabbitMQRPCMessageEventArgs() { Message = message.Message, CorrelationId = message.CorrelationId, Queue = message.Queue, ReplyTo = message.ReplyTo });
 
-                //Add final task to middleware stack.
-                middleware.Use((message, next) => 
-                {
-                    ReplyReceived?.Invoke(this, new RabbitMQRPCMessageEventArgs() { Message = message.Message, CorrelationId = message.CorrelationId, Queue = message.Queue, ReplyTo = message.ReplyTo });
-
-                    if (!_semaphoreDict.TryRemove(message.CorrelationId, out SemaphoreSlim semaphore))
-                        return Task.CompletedTask;
-
-                    if (message.Message == null)
-                        return Task.CompletedTask;
+                if (!_semaphoreDict.TryRemove(message.CorrelationId, out SemaphoreSlim semaphore))
+                    return;
 #if DEBUG
-                    Debug.WriteLine($"CLIENT: Reply Queue {args.RoutingKey} received message correlationId {args.BasicProperties.CorrelationId}.");
+                Debug.WriteLine($"CLIENT: Reply Queue {args.RoutingKey} received message correlationId {args.BasicProperties.CorrelationId}.");
 #endif
-                    _responseDict.TryAdd(message.CorrelationId, message.Message);
-                    semaphore.Release();
-
-                    return Task.CompletedTask;
-                });
-
-                //Run middleware stack and actual task.
-                middleware.Run(context).Wait();
+                _responseDict.TryAdd(message.CorrelationId, message.Message);
+                semaphore.Release();
             };
 
             _channel.BasicConsume(_replyQueue, true, _basicConsumer);
         }
 
         /// <inheritdoc/>
-        public void CallerUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function)
+        public void CallerUse(Func<RabbitMQRPCMessage, Func<Task<string>>, Task<string>> function)
         {
             _callerMiddleware.Use(function);
-        }
-
-        /// <inheritdoc/>
-        public void ReplyReceiverUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function)
-        {
-            _replyReceiverMiddleware.Use(function);
         }
 
         /// <inheritdoc/>
@@ -176,10 +154,7 @@ namespace RPC.Services
             };
 
             //Clone middleware stack.
-            var middleware = (MiddlewareProvider)_callerMiddleware.Clone();
-
-            //Setup result variable.
-            T result = default(T);
+            var middleware = (MiddlewareProvider<RabbitMQRPCMessage, string>)_callerMiddleware.Clone();
 
             //Add final task to middleware.
             middleware.Use(async (message, next) =>
@@ -205,11 +180,14 @@ namespace RPC.Services
                 Debug.WriteLine($"CLIENT: Message semaphore for {props.CorrelationId} released.");
 #endif
                 _responseDict.TryRemove(message.CorrelationId, out var responseString);
-                result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseString);
+                return responseString;
             });
 
             //Run middleware.
-            await middleware.Run(context);
+            string response = await middleware.Run(context);
+
+            //Deserialize result.
+            T result = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(response);
 
             //Return result.
             return result;

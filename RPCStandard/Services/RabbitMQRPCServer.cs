@@ -19,8 +19,7 @@ namespace RPC.Services
         /// <inheritdoc/>
         public event EventHandler<RabbitMQRPCMessageEventArgs> Responded;
 
-        private readonly MiddlewareProvider _receiverMiddleware = new MiddlewareProvider();
-        private readonly MiddlewareProvider _responderMiddleware = new MiddlewareProvider();
+        private readonly MiddlewareProvider<RabbitMQRPCMessage, RabbitMQRPCMessage> _receiverMiddleware = new MiddlewareProvider<RabbitMQRPCMessage, RabbitMQRPCMessage>();
 
         /// <inheritdoc/>
         public void Setup(int? QueuExpireTime = null)
@@ -45,15 +44,9 @@ namespace RPC.Services
         }
 
         /// <inheritdoc/>
-        public void ReceiverUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function)
+        public void ReceiverUse(Func<RabbitMQRPCMessage, Func<Task<RabbitMQRPCMessage>>, Task<RabbitMQRPCMessage>> function)
         {
             _receiverMiddleware.Use(function);
-        }
-
-        /// <inheritdoc/>
-        public void ResponderUse(Func<RabbitMQRPCMessage, Func<Task>, Task> function)
-        {
-            _responderMiddleware.Use(function);
         }
 
         /// <inheritdoc/>
@@ -98,46 +91,52 @@ namespace RPC.Services
             };
 
             //Clone middleware stack.
-            var middleware = (MiddlewareProvider)_receiverMiddleware.Clone();
-
-            //Setup response variables.
-            var response = string.Empty;
-            Task<string> responseTask = null;
+            var middleware = (MiddlewareProvider<RabbitMQRPCMessage, RabbitMQRPCMessage>)_receiverMiddleware.Clone();
 
             //Add final task to middleware stack.
-            middleware.Use((message, next) =>
+            middleware.Final = (async (message, _) =>
             {
 #if DEBUG
                 Debug.WriteLine($"SERVER: Queue {context.Queue} received message correlationId {context.CorrelationId}.");
 #endif
                 MessageReceived?.Invoke(this, new RabbitMQRPCMessageEventArgs() { Message = message.Message, CorrelationId = message.CorrelationId, Queue = message.Queue, ReplyTo = message.ReplyTo });
 
-                if (!async)
-                    response = ProcessCall(message.Message, message.CorrelationId, message.ReplyTo, message.Queue, del);
-                else
-                    responseTask = Task.Factory.StartNew<string>(() => ProcessCall(message.Message, message.CorrelationId, message.ReplyTo, message.Queue, del));
+                var result = ProcessCall(message.Message, del);
 
-                _channel.BasicAck(args.DeliveryTag, multiple: false);
+                //Context
+                RabbitMQRPCMessage responseMessage = new RabbitMQRPCMessage()
+                {
+                    Message = result,
+                    CorrelationId = message.CorrelationId,
+                    ReplyTo = string.Empty,
+                    Queue = message.ReplyTo,
+                };
 
-                return Task.CompletedTask;
+                return responseMessage;
             });
 
-            //Run middleware stack and actual task.
-            middleware.Run(context).Wait();
+            //Run middleware stack
+            var task = middleware.Run(context);
 
-            //Handle result
-            if (async)
-            {
-                responseTask.ContinueWith((Task<string> task) =>
-                {
-                    Respond(task.Result, context.ReplyTo, context.CorrelationId);
-                });
+            //Handle result sync
+            if (!async)
+            {   
+                task.Wait();
+                Respond(task.Result);
+                _channel.BasicAck(args.DeliveryTag, multiple: false);
                 return;
             }
-            Respond(response, context.ReplyTo, context.CorrelationId);
+
+            //Handle result async
+            task.ContinueWith((Task<RabbitMQRPCMessage> innerTask) =>
+            {
+                Respond(innerTask.Result);
+            });
+
+            _channel.BasicAck(args.DeliveryTag, multiple: false);
         }
 
-        private string ProcessCall(string message, string correlationId, string replyTo, string from, Delegate del)
+        private string ProcessCall(string message, Delegate del)
         {
             string serializedResponse = string.Empty;
             try
@@ -154,38 +153,17 @@ namespace RPC.Services
             return serializedResponse;
         }
 
-        private void Respond(string messageText, string replyTo, string correlationId)
+        private void Respond(RabbitMQRPCMessage message)
         {
-            //Context
-            RabbitMQRPCMessage context = new RabbitMQRPCMessage()
-            {
-                Message = messageText,
-                CorrelationId = correlationId,
-                ReplyTo = string.Empty,
-                Queue = replyTo,
-                DeliveryTag = 0
-            };
+            //Generate publish properties
+            IBasicProperties props = _channel.CreateBasicProperties();
+            props.CorrelationId = message.CorrelationId;
 
-            var middleware = (MiddlewareProvider)_responderMiddleware.Clone();
-
-            //Add final task to middleware stack.
-            middleware.Use((message, next) =>
-            {
-                //Generate publish properties
-                IBasicProperties props = _channel.CreateBasicProperties();
-                props.CorrelationId = message.CorrelationId;
-
-                _channel.BasicPublish("", message.Queue, props, Encoding.UTF8.GetBytes(message.Message));
+            _channel.BasicPublish("", message.Queue, props, Encoding.UTF8.GetBytes(message.Message));
 #if DEBUG
-                Debug.WriteLine($"SERVER: Responded to {message.Queue} message correlationId {message.CorrelationId}.");
+            Debug.WriteLine($"SERVER: Responded to {message.Queue} message correlationId {message.CorrelationId}.");
 #endif
-                Responded?.Invoke(this, new RabbitMQRPCMessageEventArgs() { Message = message.Message, CorrelationId = message.CorrelationId, Queue = message.Queue, ReplyTo = message.ReplyTo });
-
-                return Task.CompletedTask;
-            });
-
-            //Run middleware stack and actual task.
-            middleware.Run(context).Wait();
+            Responded?.Invoke(this, new RabbitMQRPCMessageEventArgs() { Message = message.Message, CorrelationId = message.CorrelationId, Queue = message.Queue, ReplyTo = message.ReplyTo });
         }
     }
 }

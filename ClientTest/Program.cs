@@ -20,15 +20,10 @@ if (client == null)
 client.CallerUse(async (message, next) =>
 {
     Debug.WriteLine("before caller");
-    await next();
+    var result = await next();
     Debug.WriteLine("after caller");
-});
 
-client.ReplyReceiverUse(async (message, next) =>
-{
-    Debug.WriteLine("before receiver");
-    await next();
-    Debug.WriteLine("after receiver");
+    return result;
 });
 
 
