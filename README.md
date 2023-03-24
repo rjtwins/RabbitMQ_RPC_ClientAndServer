@@ -18,27 +18,29 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RPC.Extensions;
 using RPC.Services;
+using System.Diagnostics;
 
 IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args);
-
-//Register services
 hostBuilder.AddRabbitMQRPC("amqp://guest:guest@localhost:5672");
 IHost host = hostBuilder.Build();
 
 host.StartAsync();
 
-//Get service
 using var scope = host.Services.CreateScope();
 var server = scope.ServiceProvider.GetService<IRabbitMQRPCServer>();
+
+server?.Setup();
 
 if (server == null)
     return;
 
-//Setup server instance
-server?.Setup();
+server.Subscribe((int x) => 
+{ 
+    return x + 1;
+}, "RPC_101", true);
 
-//Subscribe a delegate.
-server.Subscribe((int x) => { return x + 1; }, "RPC_101");
+Console.WriteLine("Press any key to exit");
+Console.ReadKey();
 ```
 Note that any parameters and returns must be serializable by Newtonsoft.Json.
 
@@ -48,47 +50,40 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RPC.Extensions;
 using RPC.Services;
+using System.Diagnostics;
 
 IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args);
-
-//Register services
 hostBuilder.AddRabbitMQRPC("amqp://guest:guest@localhost:5672");
 IHost host = hostBuilder.Build();
 
 host.StartAsync();
 
-//Get service
 using var scope = host.Services.CreateScope();
 var client = scope.ServiceProvider.GetService<IRabbitMQRPCClient>();
 
+client?.Setup();
 if (client == null)
     return;
 
-//Setup client instance
-client?.Setup();
+var result = client.Call<int>("RPC_101", 1);
+Console.WriteLine(result);
 
-//Call a remote method
-int result = client.Call<int>("RPC_101", 1);
+Console.WriteLine("Press any key to exit");
+Console.ReadKey();
 ```
 
 ### Middleware
-Both client and server support middleware wrapping around their operations.
+Both client and server support middleware.
 Client:
 ```
 //Wraps around a call.
 client.CallerUse(async (message, next) =>
 {
     Debug.WriteLine("before caller");
-    await next();
+    var result = await next();
     Debug.WriteLine("after caller");
-});
 
-//Wraps around receiving a reply.
-client.ReplyReceiverUse(async (message, next) =>
-{
-    Debug.WriteLine("before receiver");
-    await next();
-    Debug.WriteLine("after receiver");
+    return result;
 });
 ```
 Server:
@@ -97,15 +92,8 @@ Server:
 server.ReceiverUse(async (context, next) =>
 {
     Debug.WriteLine("before receive");
-    await next();
+    var result = await next();
     Debug.WriteLine("after receive");
-});
-
-//Wraps around responding after processing a message.
-server.ResponderUse(async (context, next) =>
-{
-    Debug.WriteLine("before respond");
-    await next();
-    Debug.WriteLine("after respond");
+    return result;
 });
 ```
